@@ -2,18 +2,18 @@
 
 namespace App\Controller;
 
+use App\Entity\Product;
+use App\Form\ProductType;
 use App\Repository\CategoryRepository;
 use App\Repository\ProductRepository;
+use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
-use Symfony\Component\Form\Extension\Core\Type\ChoiceType;
-use Symfony\Component\Form\Extension\Core\Type\MoneyType;
-use Symfony\Component\Form\Extension\Core\Type\TextareaType;
-use Symfony\Component\Form\Extension\Core\Type\TextType;
 use Symfony\Component\Form\FormFactoryInterface;
+use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\Routing\Annotation\Route;
-
+use Symfony\Component\String\Slugger\SluggerInterface;
 
 class ProductController extends AbstractController
 {
@@ -53,45 +53,51 @@ class ProductController extends AbstractController
     }
 
     /**
+     * @Route("/admin/product/{id}/edit",  name="product_edit")
+     */
+
+    public function edit($id, ProductRepository $productRepository, Request $request, EntityManagerInterface $em)
+    {
+        $product = $productRepository->find($id);
+
+        $form = $this->createForm(ProductType::class, $product);
+
+        //$form->setData($product);
+
+        $form->handleRequest($request);
+
+        if($form->isSubmitted()) {
+           $em->flush();
+            
+        }
+
+        $formView = $form->createView();
+
+        return $this->render('product/edit.html.twig', [
+            'product' => $product,
+            'formView'=> $formView
+        ]);
+    }
+
+    /**
      * @Route("/admin/product/create", name="product_create")
      */
-    public function create(FormFactoryInterface $factory, CategoryRepository $categoryRepository)
+    public function create( Request $request, SluggerInterface $slugger, EntityManagerInterface $em)
     {
-        $builder = $factory->createBuilder();
+        $product = new Product;
 
-        $builder->add('name', TextType::class, [
-                'label' => 'Nom du produit',
-                'attr' => ['class' =>'form-control', 'placeholder'=>'Tapez le nom du produit']
-        ])
-                ->add('shortDescription', TextareaType::class,[
-                'label'=> 'Description courte',
-                'attr'=>[
-                    'class'=> 'form-control',
-                    'placeholder'=> 'Tapez une description assez courte'
-                ]
-                ])
-                ->add('price', MoneyType::class, [
-                    'label'=> 'Prix du produit',
-                    'attr'=> [
-                        'class' => 'form-control',
-                        'placeholder'=>'Tapez le prix du produit en €'
-                    ]
-                ]);
-                
-                $options=[];
+        $form = $this->createForm(ProductType::class, $product);
 
-                foreach($categoryRepository->findAll() as $category){
-                    $options[$category->getName()] = $category->getId();
-                }
 
-                $builder->add('category', ChoiceType::class, [
-                    'label' => 'Catégorie',
-                    'attr' => ['class' => 'form-control'],
-                    'placeholder'=> '-- choisir une catégorie --',
-                    'choices'=> $options
-                ]);
+        $form->handleRequest($request);
 
-        $form = $builder->getForm();
+       if($form->isSubmitted()){
+            $product->setSlug(strtolower($slugger->slug($product->getName())));
+          
+          $em->persist($product);
+          $em->flush();
+            
+       }
         
         $formView = $form->createView();
 

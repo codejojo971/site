@@ -1,28 +1,20 @@
 {% extends "base.html.twig" %}
 
-{% form_theme formView _self%}
-
 {% block title %}
-    Création d'un produit
+    Edition de {{ product.name}}
 {% endblock %}
 
 {% block body %}
-    <h1>Nouveau produit</h1>
-
-    {#{{ form (formView)}}#}
-
+    <h1>Editer le produit {{product.name}} </h1>
     {{ form_start (formView) }}
 
     {{ form_errors (formView) }}
 
-    {#{{ form_widget (formView) }}#}
+
     <div class="row">
         <div class="col">
             {{form_row (formView.name)}}
-            {#{{form_label (formView.name)}}#}
-            {#{form_errors (formView.name)}#}
-            {#{form_widget (formView.name)}#}
-            {# {{form_help (formView.name)}}#}
+
             {{form_row (formView.price)}}
         </div>
         <div class="col">
@@ -37,16 +29,4 @@
     </button>
 
     {{ form_end (formView) }}
-
-{% endblock %}
-
-{% block form_row %}
-
-    <div class="form-group">
-        {{form_label (form)}}
-        {{form_widget (form,{'attr':{'class':'form-control'}})}}
-        {{ form_help (form)}}
-        {{ form_errors (form) }}
-    </div>
-
 {% endblock %}
